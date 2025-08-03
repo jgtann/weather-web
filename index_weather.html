@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Weather App</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #e0f7fa;
+      text-align: center;
+      padding: 40px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      margin: auto;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Live Weather Search</h1>
+  <input type="text" id="locationInput" placeholder="Enter city or country" />
+  <button onclick="getWeather()">Check Weather</button>
+
+  <div class="card" id="weatherCard" style="display:none;">
+    <h2 id="locationName"></h2>
+    <p><strong>Temperature:</strong> <span id="temperature"></span> °C</p>
+    <p><strong>Wind Speed:</strong> <span id="windspeed"></span> km/h</p>
+    <p><strong>Time:</strong> <span id="time"></span></p>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const location = document.getElementById('locationInput').value.trim();
+      if (!location) return alert('Please enter a location!');
+
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`);
+      const geoData = await geoRes.json();
+
+      if (!geoData.results || geoData.results.length === 0) {
+        alert("Location not found!");
+        return;
+      }
+
+      const { latitude, longitude, name } = geoData.results[0];
+
+      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+      const weatherData = await weatherRes.json();
+
+      const weather = weatherData.current_weather;
+
+      document.getElementById('locationName').textContent = name;
+      document.getElementById('temperature').textContent = weather.temperature;
+      document.getElementById('windspeed').textContent = weather.windspeed;
+      document.getElementById('time').textContent = weather.time;
+      document.getElementById('weatherCard').style.display = 'block';
+    }
+
+    // 🔁 Auto-refresh every hour (3600000 ms)
+    setInterval(() => {
+      const visible = document.getElementById('weatherCard').style.display === "block";
+      if (visible) getWeather();
+    }, 3600000);
+  </script>
+</body>
+</html>
